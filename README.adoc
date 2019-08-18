@@ -1,0 +1,25 @@
+= OpenSMTPD filter-rewrite-from
+
+TODO
+
+
+== Requirements
+
+* http://pubs.opengroup.org/onlinepubs/009695399/utilities/awk.html[POSIX awk] (e.g. from Busybox, GNU, BSD, …)
+* https://www.opensmtpd.org/[OpenSMTPD] 6.6.0 or higher
+
+
+== Installation
+
+TODO
+
+
+== Configuration
+
+TODO
+
+
+== License
+
+This project is licensed under http://opensource.org/licenses/ISC/[ISC License].
+For the full text of the license, see the link:LICENSE[LICENSE] file.
