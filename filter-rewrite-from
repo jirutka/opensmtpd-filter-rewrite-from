@@ -1,0 +1,83 @@
+#!/usr/bin/awk -f
+# vim: set ft=awk: ts=4:
+#
+# USAGE:
+#   filter <filter-name> proc-exec "/path/to/filter-rewrite-from <mailaddr>"
+#
+# OpenSMTPD filter that rewrites email address in both MAIL FROM command and
+# From header with the specified email address.
+#
+# ARGUMENTS:
+#   <mailaddr>  Email address to use in MAIL FROM and From header. It must be
+#               just an email address without a display name or angle brackets.
+#
+# Please report bugs at <https://github.com/jirutka/opensmtpd-rewrite-from/issues>.
+
+
+function die(msg) {
+	printf("mail-from: %s\n", msg) > "/dev/stderr"
+	exit 1
+}
+
+# If the *address* contains a display name without "@" and "<", and an email
+# address in angle brackets, replaces the email address with *mailaddr* and
+# preserves the display name. Otherwise it's defensive and returns
+# just *mailaddr*.
+function replace_mailaddr(address, mailaddr) {
+	if (address ~ /^[^@<]+<[^>]+> *$/) {
+		res = address ""
+		sub(/<[^>]+>/, "<" mailaddr ">", res)
+		return res
+	}
+	return mailaddr
+}
+
+BEGIN {
+	ARGC = 0  # don't treat additional CLI args as input files
+	FS = "|"
+	OFS = FS
+	_ = FS
+	MAILADDR = ARGV[1]
+	in_body[""] = 0
+
+	if (!MAILADDR) {
+		die("invalid usage: mail address must be provided!")
+	}
+}
+
+"config|ready" == $0 {
+	print("register|filter|smtp-in|mail-from")
+	print("register|filter|smtp-in|data-line")
+	print("register|ready")
+	next
+}
+"config" == $1 {
+	next
+}
+"filter" == $1 {
+	if (NF < 7) {
+		die("invalid filter command: expected >6 fields!")
+	}
+	sid = $6
+	token = $7
+	line = substr($0, length($1$2$3$4$5$6$7) + 8)
+
+	# continue with next rule...
+}
+"filter|smtp-in|mail-from" == $1_$4_$5 {
+	print("filter-result", token, sid, "rewrite", "<" MAILADDR ">")
+	next
+}
+"filter|smtp-in|data-line" == $1_$4_$5 {
+	if (line == "") {  # end of headers
+		in_body[sid] = 1
+	}
+	if (!in_body[sid] && match(toupper(line), /^FROM:[\t ]*/)) {
+		line = "From: " replace_mailaddr(substr(line, RLENGTH + 1), MAILADDR)
+	}
+	if (line == ".") {  # end of data
+		delete in_body[sid]
+	}
+	print("filter-dataline", token, sid, line)
+	next
+}

@@ -1,6 +1,10 @@
 = OpenSMTPD filter-rewrite-from
+:script-name: filter-rewrite-from
 
-TODO
+This is a _very_ simple OpenSMTPD filter for rewriting email address in both `MAIL FROM` command and `From` header in all footnote:[This implementation doesn’t support any conditions or different rewrite addresses based on the source. It’s really trivial, just for my current needs.] messages with the specified email address.
+It’s useful when you want to ensure that all the relayed messages will be “send from” some _no-reply_ email address.
+
+This filter is implemented in ~60 lines (LoC) of `awk`.
 
 
 == Requirements
@@ -11,12 +15,28 @@ TODO
 
 == Installation
 
-TODO
+Just copy link:{script-name}[{script-name}] to some directory, e.g. `/usr/local/share/opensmtpd`.
+If you have `awk` installed in a different directory than `/usr/bin`, adjust the shebang.
 
 
 == Configuration
 
-TODO
+The filter itself requires no configuration, only the desired From email address as the first argument.
+
+It must be declared in smtpd.conf and attached to a listener:
+
+[source, subs="+attributes"]
+----
+filter "rewrite-from" proc-exec "/usr/local/share/opensmtpd/{script-name} no-reply@example.org"
+
+listen on socket filter "rewrite-from"
+----
+
+
+== See Also
+
+* https://poolp.org/posts/2018-11-03/opensmtpd-released-and-upcoming-filters-preview/[OpenSMTPD released and upcoming filters preview] by https://github.com/poolpOrg[Gilles Chehade]
+* https://poolp.org/posts/2019-07-27/july-2019-report-tons-of-smtpd-work-mostly/[July 2019 report: tons of smtpd work mostly] by https://github.com/poolpOrg[Gilles Chehade]
 
 
 == License
