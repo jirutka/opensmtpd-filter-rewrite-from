@@ -49,6 +49,7 @@ BEGIN {
 	print("register|filter|smtp-in|mail-from")
 	print("register|filter|smtp-in|data-line")
 	print("register|ready")
+	fflush()
 	next
 }
 "config" == $1 {
@@ -65,7 +66,8 @@ BEGIN {
 	# continue with next rule...
 }
 "filter|smtp-in|mail-from" == $1_$4_$5 {
-	print("filter-result", token, sid, "rewrite", "<" MAILADDR ">")
+	print("filter-result", sid, token, "rewrite", "<" MAILADDR ">")
+	fflush()
 	next
 }
 "filter|smtp-in|data-line" == $1_$4_$5 {
@@ -78,6 +80,7 @@ BEGIN {
 	if (line == ".") {  # end of data
 		delete in_body[sid]
 	}
-	print("filter-dataline", token, sid, line)
+	print("filter-dataline", sid, token, line)
+	fflush()
 	next
 }
